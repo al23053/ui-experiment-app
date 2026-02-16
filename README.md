@@ -14,66 +14,34 @@ Bad UI / Improved UI の2パターンをランダムに提示し、タスク完�
 - TailwindCSS
 - Supabase（PostgreSQL）
 
-## セットアップ
+## データベース設計
 
-### 1. Supabaseプロジェクトの作成
-
-1. https://supabase.com にアクセスしてサインアップ
-2. 新しいプロジェクトを作成
-3. Table Editorで以下のテーブルを作成：
+### テーブル構造
 
 **テーブル名**: `experiment_results`
 
 | Column name | Type | Default value | Primary |
 |------------|------|---------------|---------|
-| id | uuid | uuid_generate_v4() | ✅ |
+| id | uuid | gen_random_uuid() | ✅ |
 | task_id | text | - | - |
 | variant | text | - | - |
 | duration | int8 | - | - |
 | session_id | text | - | - |
 | created_at | timestamptz | now() | - |
 
-4. RLS（Row Level Security）を有効化し、以下のポリシーを追加：
-   - Enable read access for all users
-   - Enable insert access for all users
+### RLSポリシー
 
-5. Project Settings → API から以下をコピー：
-   - Project URL
-   - anon public key
+```sql
+-- 読み取り許可
+CREATE POLICY "Enable read access for all users"
+ON public.experiment_results
+FOR SELECT TO public USING (true);
 
-### 2. プロジェクトのセットアップ
-
-```bash
-# リポジトリをクローン
-git clone https://github.com/al23053/ui-experiment-app.git
-cd ui-experiment-app
-
-# 依存関係をインストール
-npm install
-
-# 環境変数を設定
-cp .env.local.example .env.local
+-- 書き込み許可
+CREATE POLICY "Enable insert access for all users"
+ON public.experiment_results
+FOR INSERT TO public WITH CHECK (true);
 ```
-
-`.env.local` を編集してSupabaseの情報を設定：
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-project-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-```bash
-# 開発サーバーを起動
-npm run dev
-```
-
-ブラウザで `http://localhost:3000` を開いてください。
-
-## 使い方
-
-1. トップページで「Start Experiment」をクリック
-2. ランダムに割り当てられたUI（Bad または Improved）でタスクを完了
-3. 結果画面で全ユーザーの平均時間を確認
 
 ## プロジェクト構成
 
@@ -102,16 +70,14 @@ ui-experiment-app/
 - **統計表示**: 各バリアントの平均時間とサンプル数を表示
 - **改善効果**: 時間短縮率を自動計算
 
-## データ設計
-
-### 実験の流れ
+## 実験の流れ
 
 1. ユーザーがアクセス → セッションIDを自動生成
 2. Bad/Improved のいずれかをランダムに割当
 3. タスク完了時にデータをSupabaseに保存
 4. 結果画面で全ユーザーの集計結果を表示
 
-### データ構造
+## データ構造
 
 ```typescript
 {
@@ -124,11 +90,11 @@ ui-experiment-app/
 }
 ```
 
-### 集計ロジック
+## 集計ロジック
 
-- Bad UI: 全Bad UIデータの平均時間
-- Improved UI: 全Improved UIデータの平均時間
-- 改善効果: (1 - Improved平均 / Bad平均) × 100%
+- **Bad UI**: 全Bad UIデータの平均時間
+- **Improved UI**: 全Improved UIデータの平均時間
+- **改善効果**: (1 - Improved平均 / Bad平均) × 100%
 
 ## 拡張方法
 
@@ -138,9 +104,9 @@ ui-experiment-app/
 2. 対応する Bad/Improved コンポーネントを作成
 3. `/app/play/page.tsx` で条件分岐を追加
 
-### データ分析の追加
+### データ分析
 
-Supabaseのダッシュボードで直接SQLクエリを実行可能：
+SupabaseのSQL Editorで分析クエリを実行：
 
 ```sql
 -- バリアントごとの統計
