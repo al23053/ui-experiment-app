@@ -1,53 +1,58 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { tasks } from '@/lib/tasks';
 import { saveResult, getSessionId } from '@/lib/storage';
-import BadForm from '@/components/BadForm';
-import ImprovedForm from '@/components/ImprovedForm';
 import Timer from '@/components/Timer';
+import { Suspense } from 'react';
 
 type Variant = 'bad' | 'improved';
 
-export default function PlayPage() {
+function PlayContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const taskId = searchParams.get('task');
+
   const [variant, setVariant] = useState<Variant | null>(null);
   const [startTime, setStartTime] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionId, setSessionId] = useState<string>('');
 
+  const currentTask = tasks.find((t) => t.id === taskId);
+
   useEffect(() => {
-    // ランダムにvariantを決定
+    if (!currentTask) {
+      router.push('/');
+      return;
+    }
     const randomVariant = Math.random() < 0.5 ? 'bad' : 'improved';
     setVariant(randomVariant);
     setStartTime(Date.now());
     setSessionId(getSessionId());
     setIsLoading(false);
-  }, []);
+  }, [currentTask, router]);
 
   const handleComplete = async () => {
-    if (!variant) return;
+    if (!variant || !currentTask) return;
 
-    const endTime = Date.now();
-    const duration = endTime - startTime;
+    const duration = Date.now() - startTime;
 
     try {
       await saveResult({
-        taskId: tasks[0].id,
+        taskId: currentTask.id,
         variant,
         duration,
         sessionId,
       });
-
-      router.push('/result');
+      router.push(`/result?task=${currentTask.id}`);
     } catch (error) {
       console.error('Failed to save result:', error);
       alert('結果の保存に失敗しました。もう一度お試しください。');
     }
   };
 
-  if (isLoading || !variant) {
+  if (isLoading || !variant || !currentTask) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-600">Loading...</div>
@@ -55,27 +60,34 @@ export default function PlayPage() {
     );
   }
 
-  const currentTask = tasks[0];
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              タスク
-            </h2>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-lg">
+        <div className="bg-white rounded-lg shadow-md p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">タスク</h2>
             <Timer startTime={startTime} />
           </div>
-          <p className="text-gray-700 mb-6">{currentTask.description}</p>
+          <p className="text-gray-700 mb-8">{currentTask.description}</p>
 
-          {variant === 'bad' ? (
-            <BadForm onComplete={handleComplete} />
-          ) : (
-            <ImprovedForm onComplete={handleComplete} />
-          )}
+          {/* ここに各タスクのコンポーネントを追加していく */}
+          {/* 例: */}
+          {/* {taskId === 'delete-confirm' && variant === 'bad' && <BadDeleteConfirm onComplete={handleComplete} />} */}
+          {/* {taskId === 'delete-confirm' && variant === 'improved' && <ImprovedDeleteConfirm onComplete={handleComplete} />} */}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PlayPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    }>
+      <PlayContent />
+    </Suspense>
   );
 }

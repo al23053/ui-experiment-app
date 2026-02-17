@@ -5,7 +5,15 @@ export interface Task {
 
 export const tasks: Task[] = [
   {
-    id: 'form-input',
-    description: '名前とメールアドレスを入力して送信してください',
+    id: 'delete-confirm',
+    description: 'ファイル一覧から「sample.txt」を削除してください',
+  },
+  {
+    id: 'sort',
+    description: '商品一覧を価格が安い順に並べ替えてください',
+  },
+  {
+    id: 'filter',
+    description: 'タスク一覧から完了済みのタスクだけ表示してください',
   },
 ];
