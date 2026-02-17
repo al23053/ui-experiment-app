@@ -1,11 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { tasks } from '@/lib/tasks';
 import { saveResult, getSessionId } from '@/lib/storage';
 import Timer from '@/components/Timer';
-import { Suspense } from 'react';
+import BadDeleteConfirm from '@/components/BadDeleteConfirm';
+import ImprovedDeleteConfirm from '@/components/ImprovedDeleteConfirm';
+import BadSort from '@/components/BadSort';
+import ImprovedSort from '@/components/ImprovedSort';
+import BadFilter from '@/components/BadFilter';
+import ImprovedFilter from '@/components/ImprovedFilter';
 
 type Variant = 'bad' | 'improved';
 
@@ -26,7 +31,7 @@ function PlayContent() {
       router.push('/');
       return;
     }
-    const randomVariant = Math.random() < 0.5 ? 'bad' : 'improved';
+    const randomVariant: Variant = Math.random() < 0.5 ? 'bad' : 'improved';
     setVariant(randomVariant);
     setStartTime(Date.now());
     setSessionId(getSessionId());
@@ -70,10 +75,24 @@ function PlayContent() {
           </div>
           <p className="text-gray-700 mb-8">{currentTask.description}</p>
 
-          {/* ここに各タスクのコンポーネントを追加していく */}
-          {/* 例: */}
-          {/* {taskId === 'delete-confirm' && variant === 'bad' && <BadDeleteConfirm onComplete={handleComplete} />} */}
-          {/* {taskId === 'delete-confirm' && variant === 'improved' && <ImprovedDeleteConfirm onComplete={handleComplete} />} */}
+          {taskId === 'delete-confirm' && variant === 'bad' && (
+            <BadDeleteConfirm onComplete={handleComplete} />
+          )}
+          {taskId === 'delete-confirm' && variant === 'improved' && (
+            <ImprovedDeleteConfirm onComplete={handleComplete} />
+          )}
+          {taskId === 'sort' && variant === 'bad' && (
+            <BadSort onComplete={handleComplete} />
+          )}
+          {taskId === 'sort' && variant === 'improved' && (
+            <ImprovedSort onComplete={handleComplete} />
+          )}
+          {taskId === 'filter' && variant === 'bad' && (
+            <BadFilter onComplete={handleComplete} />
+          )}
+          {taskId === 'filter' && variant === 'improved' && (
+            <ImprovedFilter onComplete={handleComplete} />
+          )}
         </div>
       </div>
     </div>
@@ -82,11 +101,13 @@ function PlayContent() {
 
 export default function PlayPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-gray-600">Loading...</div>
+        </div>
+      }
+    >
       <PlayContent />
     </Suspense>
   );
