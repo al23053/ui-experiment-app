@@ -17,3 +17,6 @@ export const tasks: Task[] = [
     description: 'タスク一覧から完了済みのタスクだけ表示してください',
   },
 ];
+
+// ラウンド数の設定
+export const ROUND_COUNT = tasks.length;
